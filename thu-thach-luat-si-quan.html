@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thử thách Luật Sĩ quan</title>
+<style>
+  :root {
+    --navy-900: #071a33;
+    --navy-800: #0b2545;
+    --navy-700: #13315c;
+    --navy-600: #1f4e8c;
+    --red: #c8102e;
+    --red-dark: #9e0c24;
+    --gold: #c9a227;
+    --gold-light: #f3e2a0;
+    --gold-dark: #7a5e00;
+    --green: #1e7b4b;
+    --green-bg: #e6f4ec;
+    --wrong-bg: #fdeaed;
+    --paper: #ffffff;
+    --paper-soft: #f4f6fa;
+    --ink: #10233f;
+    --ink-soft: #445570;
+    --line: #d5dce8;
+    --serif: Georgia, "Times New Roman", "Noto Serif", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { font-size: 18px; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--sans);
+    color: var(--ink);
+    background:
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 22px),
+      linear-gradient(180deg, var(--navy-800), var(--navy-900));
+    background-attachment: fixed;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  button { font-family: inherit; }
+
+  :focus-visible {
+    outline: 4px solid var(--gold);
+    outline-offset: 3px;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+
+  .screen { display: none; }
+  .screen.active { display: block; animation: rise 0.35s ease-out; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h1, h2, h3 { font-family: var(--serif); margin: 0; }
+  h1:focus, h2:focus { outline: none; }
+
+  /* ---------- Rank chevrons ---------- */
+  .chevrons { display: inline-block; width: 48px; height: 40px; }
+  .chevrons svg { width: 100%; height: 100%; display: block; }
+
+  /* ---------- Start screen ---------- */
+  .hero {
+    text-align: center;
+    color: #fff;
+    padding: 28px 8px 18px;
+  }
+  .hero .chevrons { width: 64px; height: 54px; margin-bottom: 8px; }
+  .hero h1 {
+    font-size: clamp(2rem, 6.5vw, 3.6rem);
+    line-height: 1.12;
+    letter-spacing: 0.02em;
+    font-weight: 700;
+  }
+  .hero .subtitle {
+    margin: 14px auto 0;
+    font-size: clamp(1.05rem, 2.6vw, 1.4rem);
+    color: var(--gold-light);
+    max-width: 40ch;
+  }
+  .rule {
+    width: 120px;
+    height: 4px;
+    margin: 20px auto 0;
+    background: linear-gradient(90deg, var(--red) 0 50%, var(--gold) 50% 100%);
+    border-radius: 2px;
+  }
+
+  /* ---------- Stage cards ---------- */
+  .stage-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 26px 0 8px;
+  }
+  .stage-card {
+    background: var(--paper);
+    border-radius: 14px;
+    padding: 22px 18px 20px;
+    border-top: 10px solid var(--stage-color);
+    position: relative;
+    box-shadow: 0 10px 26px rgba(0,0,0,0.28);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 190px;
+  }
+  .stage-card[data-stage="1"] { --stage-color: var(--navy-600); }
+  .stage-card[data-stage="2"] { --stage-color: var(--red); }
+  .stage-card[data-stage="3"] { --stage-color: var(--gold); }
+
+  .stage-card .stage-no {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--stage-color);
+    letter-spacing: 0.06em;
+  }
+  .stage-card[data-stage="3"] .stage-no { color: var(--gold-dark); }
+  .stage-card .stage-name {
+    font-size: 1.35rem;
+    line-height: 1.25;
+    color: var(--navy-800);
+  }
+  .stage-card .stage-icon {
+    width: 46px; height: 46px;
+    color: var(--stage-color);
+  }
+  .stage-card[data-stage="3"] .stage-icon { color: var(--gold-dark); }
+  .stage-status {
+    margin-top: auto;
+    align-self: flex-start;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--paper-soft);
+    color: var(--ink);
+    border: 2px solid var(--line);
+  }
+  .stage-card.ready .stage-status { background: var(--navy-800); color: #fff; border-color: var(--navy-800); }
+  .stage-card.locked { background: #e3e8f0; }
+  .stage-card.locked .stage-name,
+  .stage-card.locked .stage-no,
+  .stage-card.locked .stage-icon { color: #5a6980; }
+  .stage-card.locked { border-top-color: #8a97ad; }
+  .stage-card.done .stage-status { background: var(--green); color: #fff; border-color: var(--green); }
+
+  .meta-line {
+    text-align: center;
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 18px 0 22px;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: block;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 18px 28px;
+    min-height: 60px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    color: #fff;
+    background: var(--red);
+    box-shadow: 0 6px 0 var(--red-dark), 0 12px 22px rgba(0,0,0,0.3);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    touch-action: manipulation;
+  }
+  .btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 var(--red-dark), 0 6px 12px rgba(0,0,0,0.3);
+  }
+  .btn.big { max-width: 520px; padding: 22px 30px; font-size: 1.5rem; }
+  .btn.gold {
+    background: var(--gold);
+    color: var(--navy-900);
+    box-shadow: 0 6px 0 var(--gold-dark), 0 12px 22px rgba(0,0,0,0.3);
+  }
+  .btn.gold:active { box-shadow: 0 2px 0 var(--gold-dark), 0 6px 12px rgba(0,0,0,0.3); }
+
+  /* ---------- Quiz screen ---------- */
+  .quiz-top {
+    text-align: center;
+    color: #fff;
+    padding: 6px 0 14px;
+  }
+  .quiz-top .brand {
+    font-family: var(--serif);
+    font-size: clamp(1.15rem, 3.4vw, 1.6rem);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .quiz-top .brand .chevrons { width: 30px; height: 26px; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 6px 0 12px;
+  }
+  .stat {
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.22);
+    color: #fff;
+    text-align: center;
+    padding: 10px 6px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.15rem;
+  }
+  .stat.score { background: var(--gold); color: var(--navy-900); border-color: var(--gold); }
+
+  .stage-banner {
+    padding: 14px 18px;
+    border-radius: 12px 12px 0 0;
+    color: #fff;
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: clamp(1.15rem, 3.2vw, 1.5rem);
+    background: var(--banner);
+  }
+  .stage-banner[data-stage="1"] { --banner: var(--navy-600); }
+  .stage-banner[data-stage="2"] { --banner: var(--red); }
+  .stage-banner[data-stage="3"] { --banner: var(--gold); color: var(--navy-900); }
+
+  .progress-wrap {
+    background: var(--paper);
+    padding: 14px 18px 4px;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .progress-track {
+    height: 16px;
+    background: var(--paper-soft);
+    border: 2px solid var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--red), var(--gold));
+    border-radius: 999px;
+    transition: width 0.45s ease;
+  }
+
+  .question-card {
+    background: var(--paper);
+    padding: 18px 18px 24px;
+    border-radius: 0 0 14px 14px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+  }
+  .question-text {
+    font-size: clamp(1.4rem, 3.8vw, 2rem);
+    line-height: 1.35;
+    color: var(--navy-800);
+    margin: 12px 0 20px;
+  }
+
+  .answers { display: grid; gap: 12px; }
+  .answer {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    text-align: left;
+    min-height: 68px;
+    padding: 14px 16px;
+    background: var(--paper);
+    color: var(--ink);
+    border: 3px solid var(--line);
+    border-radius: 12px;
+    font-size: clamp(1.1rem, 2.8vw, 1.4rem);
+    font-weight: 600;
+    line-height: 1.35;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+    touch-action: manipulation;
+  }
+  .answer .letter {
+    flex: 0 0 auto;
+    width: 44px; height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--navy-800);
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.25rem;
+  }
+  .answer:active:not(:disabled) { transform: scale(0.99); background: var(--paper-soft); }
+  .answer:disabled { cursor: default; }
+  .answer.dim { opacity: 0.55; }
+  .answer.correct {
+    background: var(--green-bg);
+    border-color: var(--green);
+    animation: pop 0.35s ease;
+  }
+  .answer.correct .letter { background: var(--green); }
+  .answer.wrong {
+    background: var(--wrong-bg);
+    border-color: var(--red);
+    animation: shake 0.35s ease;
+  }
+  .answer.wrong .letter { background: var(--red); }
+
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  .feedback {
+    display: none;
+    margin-top: 18px;
+    padding: 16px 18px;
+    border-radius: 12px;
+    border-left: 10px solid var(--green);
+    background: var(--green-bg);
+  }
+  .feedback.show { display: block; animation: rise 0.3s ease-out; }
+  .feedback.wrong { border-left-color: var(--red); background: var(--wrong-bg); }
+  .feedback .verdict {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--green);
+  }
+  .feedback.wrong .verdict { color: var(--red-dark); }
+  .feedback .explain { margin: 6px 0 0; font-size: 1.15rem; color: var(--ink); }
+
+  .next-wrap { display: none; margin-top: 20px; }
+  .next-wrap.show { display: block; }
+
+  /* ---------- Stage complete ---------- */
+  .panel {
+    background: var(--paper);
+    border-radius: 16px;
+    padding: 28px 20px 30px;
+    text-align: center;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+    border-top: 10px solid var(--gold);
+  }
+  .panel h2 {
+    font-size: clamp(1.8rem, 5.5vw, 2.8rem);
+    color: var(--navy-800);
+    line-height: 1.15;
+  }
+  .panel .lead {
+    margin: 12px auto 0;
+    font-size: clamp(1.1rem, 2.8vw, 1.4rem);
+    color: var(--ink-soft);
+    max-width: 44ch;
+  }
+  .badge {
+    width: 84px; height: 84px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    background: var(--gold);
+    display: grid;
+    place-items: center;
+    color: var(--navy-900);
+    border: 5px solid var(--gold-light);
+    box-shadow: 0 0 0 4px var(--gold);
+    animation: pop 0.5s ease;
+  }
+  .badge svg { width: 44px; height: 44px; }
+  .stage-result {
+    display: inline-block;
+    margin: 18px 0 4px;
+    padding: 10px 20px;
+    background: var(--paper-soft);
+    border: 2px solid var(--line);
+    border-radius: 999px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--navy-800);
+  }
+
+  .panel .stage-grid { text-align: left; margin-top: 22px; }
+  .panel .stage-card { box-shadow: 0 4px 14px rgba(16,35,63,0.18); }
+  .panel .btn { margin-top: 20px; }
+
+  /* ---------- Final ---------- */
+  .final-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 22px 0 6px;
+  }
+  .final-stat {
+    background: var(--navy-800);
+    color: #fff;
+    border-radius: 12px;
+    padding: 16px 8px;
+  }
+  .final-stat .value {
+    display: block;
+    font-family: var(--serif);
+    font-size: clamp(1.4rem, 4.5vw, 2.2rem);
+    font-weight: 700;
+    color: var(--gold-light);
+  }
+  .final-stat .label { font-size: 1.05rem; }
+
+  .result-message {
+    margin: 18px auto 0;
+    padding: 14px 18px;
+    max-width: 640px;
+    background: var(--gold-light);
+    border: 3px solid var(--gold);
+    border-radius: 12px;
+    font-size: clamp(1.15rem, 3vw, 1.45rem);
+    font-weight: 700;
+    color: var(--navy-900);
+  }
+
+  .significance {
+    margin: 26px 0 0;
+    text-align: left;
+    background: var(--paper-soft);
+    border: 3px double var(--gold);
+    border-radius: 12px;
+    padding: 20px 20px 10px;
+  }
+  .significance h3 {
+    font-size: 1.5rem;
+    color: var(--navy-800);
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .significance ul { list-style: none; margin: 0; padding: 0; }
+  .significance li {
+    position: relative;
+    padding: 0 0 14px 40px;
+    font-size: 1.15rem;
+    line-height: 1.45;
+  }
+  .significance li::before {
+    content: "✓";
+    position: absolute;
+    left: 0; top: 0;
+    width: 28px; height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--navy-800);
+    color: var(--gold-light);
+    font-weight: 800;
+    font-size: 1rem;
+  }
+
+  .summary-list { list-style: none; margin: 22px 0 0; padding: 0; display: grid; gap: 10px; }
+  .summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    background: var(--paper);
+    border: 3px solid var(--line);
+    border-left: 12px solid var(--stage-color);
+    border-radius: 10px;
+    padding: 12px 16px;
+  }
+  .summary-item[data-stage="1"] { --stage-color: var(--navy-600); }
+  .summary-item[data-stage="2"] { --stage-color: var(--red); }
+  .summary-item[data-stage="3"] { --stage-color: var(--gold); }
+  .summary-item .name { font-family: var(--serif); font-weight: 700; font-size: 1.2rem; color: var(--navy-800); }
+  .summary-item .done { font-weight: 800; color: var(--green); font-size: 1.1rem; white-space: nowrap; }
+  .summary-item .detail { display: block; font-size: 1rem; color: var(--ink-soft); font-weight: 600; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 760px) {
+    html { font-size: 17px; }
+    .stage-grid { grid-template-columns: 1fr; gap: 12px; }
+    .stage-card { min-height: 0; padding: 16px; }
+    .stage-card .stage-icon { display: none; }
+    .final-stats { grid-template-columns: 1fr; }
+    .stats { gap: 6px; }
+    .stat { font-size: 1rem; padding: 8px 4px; }
+    .summary-item { flex-direction: column; align-items: flex-start; }
+  }
+
+  @media (min-width: 1200px) {
+    html { font-size: 20px; }
+    .app { max-width: 1120px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main class="app">
+
+  <!-- START SCREEN -->
+  <section id="screen-start" class="screen active" aria-labelledby="start-title">
+    <header class="hero">
+      <span class="chevrons" aria-hidden="true">
+        <svg viewBox="0 0 48 40" fill="none" stroke="#c9a227" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6,10 24,22 42,10"/>
+          <polyline points="6,24 24,36 42,24"/>
+        </svg>
+      </span>
+      <h1 id="start-title" tabindex="-1">THỬ THÁCH LUẬT SĨ QUAN</h1>
+      <p class="subtitle">Khám phá lịch sử – Hiểu nội dung – Nắm bắt ý nghĩa</p>
+      <div class="rule" aria-hidden="true"></div>
+    </header>
+
+    <div class="stage-grid" id="start-stage-grid"></div>
+
+    <p class="meta-line">12 câu hỏi • 1200 điểm</p>
+    <button type="button" class="btn big" id="btn-start">BẮT ĐẦU</button>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section id="screen-quiz" class="screen" aria-labelledby="quiz-brand">
+    <header class="quiz-top">
+      <div class="brand" id="quiz-brand">
+        <span class="chevrons" aria-hidden="true">
+          <svg viewBox="0 0 48 40" fill="none" stroke="#c9a227" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6,10 24,22 42,10"/>
+            <polyline points="6,24 24,36 42,24"/>
+          </svg>
+        </span>
+        THỬ THÁCH LUẬT SĨ QUAN
+      </div>
+    </header>
+
+    <div class="stats">
+      <div class="stat" id="stat-stage">Chặng 1/3</div>
+      <div class="stat" id="stat-question">Câu 1/12</div>
+      <div class="stat score" id="stat-score">Điểm: 0</div>
+    </div>
+
+    <div class="stage-banner" id="stage-banner" data-stage="1">CHẶNG 1 — LỊCH SỬ HÌNH THÀNH</div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="progress-text">Đã trả lời 0/12 câu</span>
+        <span id="progress-percent">0%</span>
+      </div>
+      <div class="progress-track" role="progressbar" aria-label="Tiến độ" aria-valuemin="0" aria-valuemax="12" aria-valuenow="0" id="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+    </div>
+
+    <div class="question-card">
+      <h2 class="question-text" id="question-text" tabindex="-1"></h2>
+      <div class="answers" id="answers"></div>
+
+      <div class="feedback" id="feedback" role="status" aria-live="polite">
+        <div class="verdict" id="verdict"></div>
+        <p class="explain" id="explain"></p>
+      </div>
+
+      <div class="next-wrap" id="next-wrap">
+        <button type="button" class="btn" id="btn-next">CÂU TIẾP THEO</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STAGE COMPLETE SCREEN -->
+  <section id="screen-stage" class="screen" aria-labelledby="stage-title">
+    <div class="panel">
+      <div class="badge" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,13 10,19 20,6"/></svg>
+      </div>
+      <h2 id="stage-title" tabindex="-1"></h2>
+      <p class="lead" id="stage-message"></p>
+      <div class="stage-result" id="stage-result"></div>
+      <div class="stage-grid" id="stage-complete-grid"></div>
+      <button type="button" class="btn big" id="btn-continue"></button>
+    </div>
+  </section>
+
+  <!-- FINAL SCREEN -->
+  <section id="screen-final" class="screen" aria-labelledby="final-title">
+    <div class="panel">
+      <div class="badge" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="4,8 12,15 20,8"/><polyline points="4,15 12,22 20,15" transform="translate(0,-2)"/></svg>
+      </div>
+      <h2 id="final-title" tabindex="-1">HOÀN THÀNH THỬ THÁCH!</h2>
+      <p class="lead">Bạn đã hoàn thành cả 3 chặng.</p>
+
+      <div class="final-stats">
+        <div class="final-stat"><span class="value" id="final-correct">0/12</span><span class="label">Số câu đúng</span></div>
+        <div class="final-stat"><span class="value" id="final-score">0/1200</span><span class="label">Điểm</span></div>
+        <div class="final-stat"><span class="value" id="final-percent">0%</span><span class="label">Tỷ lệ chính xác</span></div>
+      </div>
+
+      <div class="result-message" id="final-message"></div>
+
+      <ul class="summary-list" id="summary-list"></ul>
+
+      <div class="significance">
+        <h3>Ý nghĩa của Luật Sĩ quan</h3>
+        <ul>
+          <li>Tạo cơ sở pháp lý để quy định về vị trí, chức năng, nhiệm vụ, quyền hạn và trách nhiệm của sĩ quan.</li>
+          <li>Xây dựng đội ngũ sĩ quan chính quy, có chất lượng.</li>
+          <li>Bảo đảm quyền lợi và chế độ, chính sách đối với sĩ quan.</li>
+          <li>Giúp sĩ quan yên tâm công tác và hoàn thành nhiệm vụ.</li>
+          <li>Nâng cao tính kỷ luật và trách nhiệm của sĩ quan.</li>
+          <li>Góp phần xây dựng Quân đội nhân dân Việt Nam cách mạng, chính quy, tinh nhuệ, từng bước hiện đại.</li>
+        </ul>
+      </div>
+
+      <button type="button" class="btn big gold" id="btn-restart">CHƠI LẠI</button>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Data ---------- */
+  var STAGES = [
+    {
+      no: 1,
+      name: "LỊCH SỬ HÌNH THÀNH",
+      doneTitle: "HOÀN THÀNH CHẶNG 1!",
+      doneMessage: "Bạn đã nắm được những mốc quan trọng trong quá trình hình thành Luật Sĩ quan.",
+      icon: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="6" width="30" height="36" rx="3"/><line x1="16" y1="16" x2="32" y2="16"/><line x1="16" y1="24" x2="32" y2="24"/><line x1="16" y1="32" x2="26" y2="32"/></svg>'
+    },
+    {
+      no: 2,
+      name: "NỘI DUNG CỦA LUẬT",
+      doneTitle: "HOÀN THÀNH CHẶNG 2!",
+      doneMessage: "Bạn đã hiểu những nội dung cơ bản được quy định trong Luật Sĩ quan.",
+      icon: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10c6-3 11-3 16 1v29c-5-4-10-4-16-1z"/><path d="M40 10c-6-3-11-3-16 1v29c5-4 10-4 16-1z"/></svg>'
+    },
+    {
+      no: 3,
+      name: "Ý NGHĨA CỦA LUẬT",
+      doneTitle: "HOÀN THÀNH CHẶNG 3!",
+      doneMessage: "",
+      icon: '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="19" r="12"/><polyline points="16,29 13,43 24,37 35,43 32,29"/><polyline points="19,19 23,23 30,15"/></svg>'
+    }
+  ];
+
+  var QUESTIONS = [
+    {
+      stage: 1,
+      question: "Luật Sĩ quan Quân đội nhân dân Việt Nam được Quốc hội thông qua vào ngày nào?",
+      answers: ["22/12/1944", "21/12/1999", "02/09/1945", "30/04/1975"],
+      correct: 1,
+      explanation: "Luật Sĩ quan Quân đội nhân dân Việt Nam được Quốc hội thông qua ngày 21/12/1999."
+    },
+    {
+      stage: 1,
+      question: "Luật Sĩ quan Quân đội nhân dân Việt Nam có số hiệu là gì?",
+      answers: ["16/1999/QH10", "15/1999/QH10", "16/2000/QH10", "10/1999/QH10"],
+      correct: 0,
+      explanation: "Đây là Luật số 16/1999/QH10."
+    },
+    {
+      stage: 1,
+      question: "Sau khi được Quốc hội thông qua, Luật Sĩ quan Quân đội nhân dân Việt Nam đã được xử lý như thế nào?",
+      answers: [
+        "Bị hủy bỏ hoàn toàn",
+        "Được sửa đổi, bổ sung qua các lần sau",
+        "Chỉ thay đổi tên gọi",
+        "Không bao giờ được thay đổi"
+      ],
+      correct: 1,
+      explanation: "Luật đã được sửa đổi, bổ sung qua các lần sau để tiếp tục hoàn thiện các quy định liên quan đến sĩ quan."
+    },
+    {
+      stage: 1,
+      question: "Việc hình thành Luật Sĩ quan có ý nghĩa gì về mặt pháp lý?",
+      answers: [
+        "Tạo cơ sở pháp lý để quy định những vấn đề cơ bản về đội ngũ sĩ quan",
+        "Chỉ quy định về quân phục",
+        "Chỉ quy định về thời gian huấn luyện",
+        "Chỉ quy định về cấp bậc quân hàm"
+      ],
+      correct: 0,
+      explanation: "Luật tạo cơ sở pháp lý để quy định những vấn đề cơ bản về đội ngũ sĩ quan."
+    },
+    {
+      stage: 2,
+      question: "Nội dung nào sau đây thuộc phạm vi của Luật Sĩ quan Quân đội nhân dân Việt Nam?",
+      answers: [
+        "Chức vụ, cấp bậc quân hàm của sĩ quan",
+        "Chương trình giáo dục phổ thông",
+        "Luật giao thông đường bộ",
+        "Hoạt động kinh doanh của doanh nghiệp"
+      ],
+      correct: 0,
+      explanation: "Luật Sĩ quan quy định về chức vụ, cấp bậc quân hàm và nhiều vấn đề cơ bản khác liên quan đến sĩ quan."
+    },
+    {
+      stage: 2,
+      question: "Nội dung nào sau đây được Luật Sĩ quan quy định?",
+      answers: [
+        "Tiêu chuẩn của sĩ quan",
+        "Điểm thi đại học",
+        "Chương trình học THPT",
+        "Quy định về hộ khẩu"
+      ],
+      correct: 0,
+      explanation: "Tiêu chuẩn của sĩ quan là một trong những nội dung được Luật Sĩ quan quy định."
+    },
+    {
+      stage: 2,
+      question: "Luật Sĩ quan quy định những vấn đề nào liên quan trực tiếp đến sĩ quan?",
+      answers: [
+        "Quyền và nghĩa vụ của sĩ quan",
+        "Chỉ quyền lợi của học sinh",
+        "Chỉ hoạt động kinh tế",
+        "Chỉ chế độ nghỉ phép"
+      ],
+      correct: 0,
+      explanation: "Luật quy định quyền và nghĩa vụ của sĩ quan, cùng với các nội dung liên quan khác."
+    },
+    {
+      stage: 2,
+      question: "Ngoài quyền và nghĩa vụ, Luật Sĩ quan còn quy định vấn đề nào sau đây?",
+      answers: [
+        "Chế độ, chính sách đối với sĩ quan",
+        "Chương trình đào tạo phổ thông",
+        "Quy định thi bằng lái xe",
+        "Hoạt động của doanh nghiệp"
+      ],
+      correct: 0,
+      explanation: "Chế độ, chính sách đối với sĩ quan là một trong những nội dung của Luật Sĩ quan."
+    },
+    {
+      stage: 3,
+      question: "Một trong những ý nghĩa quan trọng của việc hình thành Luật Sĩ quan là gì?",
+      answers: [
+        "Tạo cơ sở pháp lý để quy định vị trí, chức năng, nhiệm vụ, quyền hạn và trách nhiệm của sĩ quan",
+        "Chỉ làm tăng số lượng sĩ quan",
+        "Chỉ thay đổi quân phục",
+        "Chỉ quy định thời gian làm việc"
+      ],
+      correct: 0,
+      explanation: "Luật tạo cơ sở pháp lý để xác định rõ vị trí, chức năng, nhiệm vụ, quyền hạn và trách nhiệm của sĩ quan."
+    },
+    {
+      stage: 3,
+      question: "Luật Sĩ quan góp phần xây dựng đội ngũ sĩ quan như thế nào?",
+      answers: [
+        "Chính quy, có chất lượng, đáp ứng yêu cầu xây dựng và bảo vệ Tổ quốc",
+        "Chỉ tập trung tăng số lượng",
+        "Không cần chú trọng chất lượng",
+        "Chỉ tập trung vào cấp bậc quân hàm"
+      ],
+      correct: 0,
+      explanation: "Luật góp phần xây dựng đội ngũ sĩ quan chính quy, có chất lượng, đáp ứng yêu cầu xây dựng và bảo vệ Tổ quốc."
+    },
+    {
+      stage: 3,
+      question: "Luật Sĩ quan có ý nghĩa như thế nào đối với quyền lợi và đời sống công tác của sĩ quan?",
+      answers: [
+        "Bảo đảm quyền lợi và chế độ, chính sách đối với sĩ quan",
+        "Loại bỏ các chế độ, chính sách",
+        "Chỉ quy định về cấp bậc",
+        "Không liên quan đến quyền lợi của sĩ quan"
+      ],
+      correct: 0,
+      explanation: "Luật góp phần bảo đảm quyền lợi và chế độ, chính sách đối với sĩ quan, giúp họ yên tâm công tác và hoàn thành nhiệm vụ."
+    },
+    {
+      stage: 3,
+      question: "Việc hình thành Luật Sĩ quan góp phần xây dựng Quân đội nhân dân Việt Nam theo phương hướng nào?",
+      answers: [
+        "Cách mạng, chính quy, tinh nhuệ, từng bước hiện đại",
+        "Chỉ tập trung phát triển số lượng",
+        "Chỉ tập trung phát triển trang bị",
+        "Giảm yêu cầu về kỷ luật và trách nhiệm"
+      ],
+      correct: 0,
+      explanation: "Luật góp phần xây dựng Quân đội nhân dân Việt Nam cách mạng, chính quy, tinh nhuệ, từng bước hiện đại."
+    }
+  ];
+
+  var TOTAL = QUESTIONS.length;
+  var POINTS = 100;
+  var LETTERS = ["A", "B", "C", "D"];
+
+  /* ---------- State ---------- */
+  var state = {
+    index: 0,
+    score: 0,
+    correctCount: 0,
+    stageCorrect: [0, 0, 0],
+    answered: false,
+    completedStages: 0
+  };
+
+  /* ---------- Helpers ---------- */
+  function $(id) { return document.getElementById(id); }
+
+  function showScreen(id, focusId) {
+    var screens = document.querySelectorAll(".screen");
+    for (var i = 0; i < screens.length; i++) {
+      screens[i].classList.remove("active");
+    }
+    $(id).classList.add("active");
+    window.scrollTo(0, 0);
+    if (focusId && $(focusId)) {
+      try { $(focusId).focus({ preventScroll: true }); } catch (e) { $(focusId).focus(); }
+    }
+  }
+
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function stageStatuses() {
+    var result = [];
+    for (var i = 0; i < STAGES.length; i++) {
+      if (i < state.completedStages) result.push("done");
+      else if (i === state.completedStages) result.push("ready");
+      else result.push("locked");
+    }
+    return result;
+  }
+
+  var STATUS_TEXT = { done: "Đã hoàn thành", ready: "Đang chờ", locked: "Đã khóa" };
+
+  function renderStageCards(container, statuses) {
+    container.textContent = "";
+    for (var i = 0; i < STAGES.length; i++) {
+      var s = STAGES[i];
+      var card = el("article", "stage-card " + statuses[i]);
+      card.setAttribute("data-stage", String(s.no));
+
+      var icon = el("div", "stage-icon");
+      icon.setAttribute("aria-hidden", "true");
+      icon.innerHTML = s.icon;
+
+      card.appendChild(icon);
+      card.appendChild(el("div", "stage-no", "CHẶNG " + s.no));
+      card.appendChild(el("h3", "stage-name", s.name));
+      var prefix = statuses[i] === "done" ? "✓ " : (statuses[i] === "locked" ? "🔒 " : "");
+      card.appendChild(el("div", "stage-status", prefix + STATUS_TEXT[statuses[i]]));
+      container.appendChild(card);
+    }
+  }
+
+  function stageOfIndex(i) { return QUESTIONS[i].stage; }
+
+  /* ---------- Rendering ---------- */
+  function renderProgress() {
+    var answeredCount = state.index + (state.answered ? 1 : 0);
+    var percent = Math.round((answeredCount / TOTAL) * 100);
+    $("progress-fill").style.width = percent + "%";
+    $("progress-text").textContent = "Đã trả lời " + answeredCount + "/" + TOTAL + " câu";
+    $("progress-percent").textContent = percent + "%";
+    $("progress-track").setAttribute("aria-valuenow", String(answeredCount));
+  }
+
+  function renderScore() {
+    $("stat-score").textContent = "Điểm: " + state.score;
+  }
+
+  function renderQuestion() {
+    var q = QUESTIONS[state.index];
+    var stage = STAGES[q.stage - 1];
+    state.answered = false;
+
+    $("stat-stage").textContent = "Chặng " + q.stage + "/3";
+    $("stat-question").textContent = "Câu " + (state.index + 1) + "/" + TOTAL;
+    renderScore();
+
+    var banner = $("stage-banner");
+    banner.setAttribute("data-stage", String(q.stage));
+    banner.textContent = "CHẶNG " + q.stage + " — " + stage.name;
+
+    $("question-text").textContent = q.question;
+
+    var box = $("answers");
+    box.textContent = "";
+    for (var i = 0; i < q.answers.length; i++) {
+      (function (choice) {
+        var btn = el("button", "answer");
+        btn.type = "button";
+        btn.setAttribute("data-index", String(choice));
+        btn.appendChild(el("span", "letter", LETTERS[choice]));
+        btn.appendChild(el("span", "answer-text", LETTERS[choice] + ". " + q.answers[choice]));
+        btn.addEventListener("click", function () { handleAnswer(choice); });
+        box.appendChild(btn);
+      })(i);
+    }
+
+    var fb = $("feedback");
+    fb.className = "feedback";
+    $("verdict").textContent = "";
+    $("explain").textContent = "";
+    $("next-wrap").classList.remove("show");
+
+    renderProgress();
+  }
+
+  function handleAnswer(choice) {
+    if (state.answered) return;
+    state.answered = true;
+
+    var q = QUESTIONS[state.index];
+    var isCorrect = choice === q.correct;
+    var buttons = $("answers").querySelectorAll(".answer");
+
+    for (var i = 0; i < buttons.length; i++) {
+      var b = buttons[i];
+      b.disabled = true;
+      if (i === q.correct) {
+        b.classList.add("correct");
+      } else if (i === choice) {
+        b.classList.add("wrong");
+      } else {
+        b.classList.add("dim");
+      }
+    }
+
+    if (isCorrect) {
+      state.score += POINTS;
+      state.correctCount += 1;
+      state.stageCorrect[q.stage - 1] += 1;
+    }
+
+    var fb = $("feedback");
+    fb.className = "feedback show" + (isCorrect ? "" : " wrong");
+    $("verdict").textContent = isCorrect ? "✓ Chính xác!" : "✗ Chưa chính xác!";
+    $("explain").textContent = q.explanation;
+
+    $("next-wrap").classList.add("show");
+    renderScore();
+    renderProgress();
+
+    var next = $("btn-next");
+    try { next.focus({ preventScroll: true }); } catch (e) { next.focus(); }
+    if (next.scrollIntoView) {
+      try { next.scrollIntoView({ behavior: "smooth", block: "nearest" }); } catch (e) { /* ignore */ }
+    }
+  }
+
+  function handleNext() {
+    if (!state.answered) return;
+    var currentStage = stageOfIndex(state.index);
+    var isLastInStage = (state.index === TOTAL - 1) || (stageOfIndex(state.index + 1) !== currentStage);
+
+    if (isLastInStage) {
+      state.completedStages = currentStage;
+      if (currentStage === STAGES.length) {
+        showFinal();
+      } else {
+        showStageComplete(currentStage);
+      }
+    } else {
+      state.index += 1;
+      renderQuestion();
+      var qt = $("question-text");
+      try { qt.focus({ preventScroll: true }); } catch (e) { qt.focus(); }
+      window.scrollTo(0, 0);
+    }
+  }
+
+  function showStageComplete(stageNo) {
+    var stage = STAGES[stageNo - 1];
+    $("stage-title").textContent = stage.doneTitle;
+    $("stage-message").textContent = stage.doneMessage;
+    $("stage-result").textContent = "Chặng " + stageNo + ": " + state.stageCorrect[stageNo - 1] + "/4 câu đúng • Điểm: " + state.score;
+    renderStageCards($("stage-complete-grid"), stageStatuses());
+    $("btn-continue").textContent = "BẮT ĐẦU CHẶNG " + (stageNo + 1);
+    showScreen("screen-stage", "stage-title");
+  }
+
+  function handleContinue() {
+    state.index += 1;
+    renderQuestion();
+    showScreen("screen-quiz", "question-text");
+  }
+
+  function finalMessage(score) {
+    if (score >= 1000) return "Xuất sắc! Bạn đã nắm rất chắc nội dung bài học.";
+    if (score >= 700) return "Rất tốt! Bạn đã nắm được phần lớn kiến thức.";
+    if (score >= 400) return "Khá tốt! Hãy xem lại một số nội dung để ghi nhớ chắc hơn.";
+    return "Hãy thử lại để củng cố kiến thức.";
+  }
+
+  function showFinal() {
+    var percent = Math.round((state.correctCount / TOTAL) * 100);
+    $("final-correct").textContent = state.correctCount + "/" + TOTAL;
+    $("final-score").textContent = state.score + "/" + (TOTAL * POINTS);
+    $("final-percent").textContent = percent + "%";
+    $("final-message").textContent = finalMessage(state.score);
+
+    var list = $("summary-list");
+    list.textContent = "";
+    for (var i = 0; i < STAGES.length; i++) {
+      var item = el("li", "summary-item");
+      item.setAttribute("data-stage", String(STAGES[i].no));
+      var left = el("div", "");
+      left.appendChild(el("span", "name", STAGES[i].name));
+      left.appendChild(el("span", "detail", "Chặng " + STAGES[i].no + ": " + state.stageCorrect[i] + "/4 câu đúng"));
+      item.appendChild(left);
+      item.appendChild(el("span", "done", "✓ Đã hoàn thành"));
+      list.appendChild(item);
+    }
+
+    showScreen("screen-final", "final-title");
+  }
+
+  function resetGame() {
+    state.index = 0;
+    state.score = 0;
+    state.correctCount = 0;
+    state.stageCorrect = [0, 0, 0];
+    state.answered = false;
+    state.completedStages = 0;
+    renderStageCards($("start-stage-grid"), stageStatuses());
+    showScreen("screen-start", "start-title");
+  }
+
+  function startGame() {
+    state.index = 0;
+    state.score = 0;
+    state.correctCount = 0;
+    state.stageCorrect = [0, 0, 0];
+    state.answered = false;
+    state.completedStages = 0;
+    renderQuestion();
+    showScreen("screen-quiz", "question-text");
+  }
+
+  /* ---------- Init ---------- */
+  $("btn-start").addEventListener("click", startGame);
+  $("btn-next").addEventListener("click", handleNext);
+  $("btn-continue").addEventListener("click", handleContinue);
+  $("btn-restart").addEventListener("click", resetGame);
+
+  renderStageCards($("start-stage-grid"), stageStatuses());
+})();
+</script>
+</body>
+</html>
